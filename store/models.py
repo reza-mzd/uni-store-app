@@ -7,6 +7,11 @@ class Product(models.Model):
     discount = models.PositiveIntegerField(default=0)
     description = models.TextField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
+    picture = models.ImageField(upload_to='products_images/', null=True, blank=True)
+    
+    def __str__(self):
+        return self.name
+    
     
     
 class Comment(models.Model):
