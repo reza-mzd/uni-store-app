@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 
 from . import models
+from django.views import View
 # Create your views here.
 
 def hello_world(request):
@@ -14,13 +15,19 @@ def hello_world(request):
     
     return HttpResponse(f"Your IP Address is: {ip}")
 
-def show_products(request):
-    html = ''
-    products = models.Product.objects.all()
-    for product in products:
-        html += product.name + "<br/>"
+# def show_products(request):
+#     html = ''
+#     products = models.Product.objects.all()
+#     for product in products:
+#         html += product.name + "<br/>"
     
-    return HttpResponse(html) 
+#     return HttpResponse(html) 
 
+class ProductListview(View):
+    def get(self, request):
+        products = models.Product.objects.all()
+
+        # context = {'objs': products}
+        return render(request, 'store/product_list.html', {'objs': products})
         
     
