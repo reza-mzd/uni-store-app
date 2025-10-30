@@ -22,7 +22,13 @@
               <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
               <button type="button" class="btn btn-sm btn-outline-secondary">Add To Card</button>
             </div>
-            <small class="text-muted">{{ p.price }} Tomans</small>
+            <small class="text-muted">
+              {% if p.discount > 0 %}
+              <s>{{ p.price }} Tomans <br></s>
+              {{ p.calculate_discounted_prices}} Tomans</small>
+              {% else %}
+              {{ p.price }} Tomans <br>
+              {% endif %}
           </div>
         </div>
       </div>
