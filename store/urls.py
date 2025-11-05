@@ -6,4 +6,5 @@ app_name = 'store'
 urlpatterns = [
     path('yourIP/', views.hello_world),
     path('product/', views.ProductListview.as_view(), name='product_list'),
+    path('test-form', views.TestFormView.as_view(), name='test-form')
 ]

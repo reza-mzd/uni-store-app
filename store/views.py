@@ -24,6 +24,7 @@ def hello_world(request):
 #     return HttpResponse(html) 
 
 class ProductListview(View):
+    
     def get(self, request):
         products = models.Product.objects.all()
 
@@ -31,3 +32,13 @@ class ProductListview(View):
         return render(request, 'store/product_list.html', {'objs': products})
         
     
+class TestFormView(View):
+    
+    def get(self, request):
+        return render(request, 'store/testform.html')
+    
+    def post(self, request):
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        return render(request, 'store/showresult.html', {'u': username, 'p': password})
