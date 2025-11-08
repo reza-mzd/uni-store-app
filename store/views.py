@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-
+from . import forms
 from . import models
 from django.views import View
 # Create your views here.
@@ -35,10 +35,16 @@ class ProductListview(View):
 class TestFormView(View):
     
     def get(self, request):
-        return render(request, 'store/testform.html')
+        form = forms.MyForm()
+        return render(request, 'store/testform.html', {'form': form})
     
     def post(self, request):
-        username = request.POST.get('username')
-        password = request.POST.get('password')
         
-        return render(request, 'store/showresult.html', {'u': username, 'p': password})
+        form = forms.MyForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+        
+            return render(request, 'store/showresult.html', {'u': username, 'p': password})
+        
+        return render(request, 'store/testform.html', {'form': form})

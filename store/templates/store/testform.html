@@ -9,20 +9,13 @@
     <form method="post">
 
         {% csrf_token %}
-        <div>
-            <label for="username">Username: </label>
-            <input type="text" name="username" id="username">
-        </div>
-
-        <div>
-            <label for="password">Password: </label>
-            <input type="password" name="password" id="password">
-        </div>
+        <table>
+            {{ form.as_table }}
+        </table>
 
         <div>
             <input type="submit" value="Send">
         </div>
-
 
     </form>
 </body>
