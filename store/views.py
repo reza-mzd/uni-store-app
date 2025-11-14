@@ -1,27 +1,19 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from . import forms
 from . import models
 from django.views import View
-# Create your views here.
 
-def hello_world(request):
-    ip = request.META.get('HTTP_X_FORWARDED_FOR')
-    
-    if ip:
-        ip = ip.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    
-    return HttpResponse(f"Your IP Address is: {ip}")
 
-# def show_products(request):
-#     html = ''
-#     products = models.Product.objects.all()
-#     for product in products:
-#         html += product.name + "<br/>"
+# def hello_world(request):
+#     ip = request.META.get('HTTP_X_FORWARDED_FOR')
     
-#     return HttpResponse(html) 
+#     if ip:
+#         ip = ip.split(',')[0]
+#     else:
+#         ip = request.META.get('REMOTE_ADDR')
+    
+#     return HttpResponse(f"Your IP Address is: {ip}")
 
 class ProductListview(View):
     
@@ -48,3 +40,24 @@ class TestFormView(View):
             return render(request, 'store/showresult.html', {'u': username, 'p': password})
         
         return render(request, 'store/testform.html', {'form': form})
+
+from django.shortcuts import get_object_or_404
+class ProductDetailView(View):
+    def get(self, request, pid):
+        try:
+            obj = models.Product.objects.get(id=pid)
+            form = forms.CommentForm(initial={'product': obj})
+            return render(request, 'store/product_details.html', {'obj': obj, 'form': form})
+        except models.Product.DoesNotExist:
+            return render(request, 'store/product_404.html') 
+        
+        # obj = get_object_or_404(models.Product, id=pid)   # we can use this line instead of try-except method
+
+from django.shortcuts import reverse
+class CommentsView(View):
+    def post(self, request, pid):
+        obj = get_object_or_404(models.Product, id=pid)
+        form = forms.CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save()
+        return HttpResponseRedirect(reverse('store:product-detail', pid=pid))

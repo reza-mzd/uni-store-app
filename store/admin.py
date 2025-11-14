@@ -9,5 +9,11 @@ class ProductAdmin(admin.ModelAdmin):
     get_comments_count.short_description = 'Comments'
     class Meta:
         model = Product
-        
+
+
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'date', 'product', 'is_approved')
+    
+
+admin.site.register(Comment, CommentAdmin) 
 admin.site.register(Product, ProductAdmin)  

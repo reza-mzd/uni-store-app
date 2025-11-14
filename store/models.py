@@ -39,4 +39,9 @@ class Comment(models.Model):
     date = models.DateTimeField(auto_now_add=True) 
     body = models.TextField()
     product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='comments')
-    reply_to = models.ForeignKey('self', on_delete=models.PROTECT, null=True)
+    reply_to = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True)
+    is_approved = models.BooleanField(default=False)
+    
+    
+    def __str__(self):
+        return self.name

@@ -1,6 +1,6 @@
 from django import forms
 from django.core import validators
-
+from . import models
 class MyForm(forms.Form):
     username = forms.CharField()
     password = forms.CharField(widget=forms.PasswordInput())
@@ -20,3 +20,9 @@ class MyForm(forms.Form):
 
         if u == p:
             raise forms.ValidationError('User and Pass must not be same')
+        
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = models.Comment
+        fields = ['body', 'product']
+        widgets = {'product': forms.HiddenInput()}

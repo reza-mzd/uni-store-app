@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %} 
+{# {% load jacal_tags %} #}
+
+{% block main_content %}
+{% spaceless %}
+
+  <h1> {{ obj.name }} </h1>
+  <img src=" {% if obj.picture %} {{obj.picture.url}} {% else %} {% static "store/img/noimage.webp" %} {% endif %} "/><br/>
+  <p> {{ obj.description }} </p>
+    {% if obj.discount > 0 %}
+      <s>{{ obj.price }} Tomans <br></s>
+      {{ obj.calculate_discounted_prices}} Tomans</small>
+  {% else %}
+      {{ obj.price }} Tomans <br>
+  {% endif %}
+  <hr/>
+
+  {% for c in obj.comments.all %}
+    <div>
+      <b> {{ c.user.username }} </b>({{ c.date|date:"Y/m/d - H:i" }}) : {{ c.body }}
+      {# <b> {{ c.user.username }} </b>({{ c.date|to_jalali:'%Y/%m/%d - %H:%M' }}) : {{ c.body }} #}
+    </div>
+  {% empty %}
+    No Comments Yet
+  {% endfor %}
+  
+  <form action="{% url 'store:comments' pid=obj.id %}"  method='post'>
+    {% comment %}
+     {{ form.non_field_errors }}
+    
+    {% for e in form.non_field_errors %}
+        {{ e }}
+    {% endfor %} 
+    {% endcomment %}
+
+
+    {% csrf_token %}  
+    {{ form.body }}
+    {{ form.product.as_hidden }} 
+    {# {{ form.body.label_tag }} #}
+    {# {{ form.body.help_text }} #}
+    {{ form.body.errors }}
+    <br>
+    <input type="submit" value="Submit" class="btn btn-primary">
+  </form>
+
+{% endspaceless %}
+{% endblock main_content %}
