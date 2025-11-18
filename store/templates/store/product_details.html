@@ -16,7 +16,7 @@
   {% endif %}
   <hr/>
 
-  {% for c in obj.comments.all %}
+  {% for c in comments %}
     <div>
       <b> {{ c.user.username }} </b>({{ c.date|date:"Y/m/d - H:i" }}) : {{ c.body }}
       {# <b> {{ c.user.username }} </b>({{ c.date|to_jalali:'%Y/%m/%d - %H:%M' }}) : {{ c.body }} #}
@@ -37,7 +37,7 @@
 
     {% csrf_token %}  
     {{ form.body }}
-    {{ form.product.as_hidden }} 
+    {# {{ form.product.as_hidden }} #}
     {# {{ form.body.label_tag }} #}
     {# {{ form.body.help_text }} #}
     {{ form.body.errors }}

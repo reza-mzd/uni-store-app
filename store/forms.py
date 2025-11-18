@@ -24,5 +24,4 @@ class MyForm(forms.Form):
 class CommentForm(forms.ModelForm):
     class Meta:
         model = models.Comment
-        fields = ['body', 'product']
-        widgets = {'product': forms.HiddenInput()}
+        fields = ['body']

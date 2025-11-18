@@ -42,12 +42,15 @@ class TestFormView(View):
         return render(request, 'store/testform.html', {'form': form})
 
 from django.shortcuts import get_object_or_404
+from django.db.models import Prefetch
 class ProductDetailView(View):
     def get(self, request, pid):
         try:
             obj = models.Product.objects.get(id=pid)
-            form = forms.CommentForm(initial={'product': obj})
-            return render(request, 'store/product_details.html', {'obj': obj, 'form': form})
+            comments = obj.comments.filter(is_approved=True).prefetch_related('user').order_by('-date')
+            form = forms.CommentForm()
+            return render(request, 'store/product_details.html',
+                          {'obj': obj, 'form': form, 'comments': comments})
         except models.Product.DoesNotExist:
             return render(request, 'store/product_404.html') 
         
@@ -56,8 +59,12 @@ class ProductDetailView(View):
 from django.shortcuts import reverse
 class CommentsView(View):
     def post(self, request, pid):
-        obj = get_object_or_404(models.Product, id=pid)
+        product = get_object_or_404(models.Product, id=pid)
         form = forms.CommentForm(request.POST)
         if form.is_valid():
-            comment = form.save()
-        return HttpResponseRedirect(reverse('store:product-detail', pid=pid))
+            comment = form.save(commit=False)
+            comment.product = product
+            comment.user = request.user
+            comment.save()         
+            return HttpResponseRedirect(reverse('store:product-detail', kwargs={"pid":pid}))
+        return render(request, 'store/product_details.html', {'obj': product, 'form': form})

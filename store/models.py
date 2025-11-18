@@ -42,6 +42,5 @@ class Comment(models.Model):
     reply_to = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True)
     is_approved = models.BooleanField(default=False)
     
-    
     def __str__(self):
-        return self.name
+        return f'Comment by {self.user.username} on {self.date.strftime("%Y-%m-%d")}'
