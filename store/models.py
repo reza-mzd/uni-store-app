@@ -19,6 +19,12 @@ class Product(models.Model):
     is_deleted = models.BooleanField(default=False)
     picture = models.ImageField(upload_to=_get_product_file_upload_path, null=True, blank=True)
     #comments
+    # New , Used , Refurbished and Repaired
+    type_of_product = models.CharField(max_length=100, choices=(('new', 'New'),
+                                                                ('used', 'Used'),
+                                                                ('refurbished', 'Refurbished'),
+                                                                ('repaired', 'Repaired')))
+    
     
     def calculate_discounted_prices(self):
         res = int(self.price - (self.price * self.discount / 100))
