@@ -11,6 +11,13 @@ def _get_product_file_upload_path(instance, filename):
     return path
 
 class Product(models.Model):
+    class ProductType(models.TextChoices):
+        NEW = 'new'
+        USED = 'used'
+        REFURBISHED = 'refurbished'
+        REPAIRED = 'repaired'
+
+        
     name = models.CharField(max_length=200)
     price = models.PositiveIntegerField()
     count = models.PositiveIntegerField(default=0)
@@ -20,10 +27,7 @@ class Product(models.Model):
     picture = models.ImageField(upload_to=_get_product_file_upload_path, null=True, blank=True)
     #comments
     # New , Used , Refurbished and Repaired
-    type_of_product = models.CharField(max_length=100, choices=(('new', 'New'),
-                                                                ('used', 'Used'),
-                                                                ('refurbished', 'Refurbished'),
-                                                                ('repaired', 'Repaired')))
+    type_of_product = models.CharField(max_length=100, choices=ProductType.choices)
     
     
     def calculate_discounted_prices(self):
@@ -35,6 +39,13 @@ class Product(models.Model):
     
     def __str__(self):
         return self.name
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['price']),
+            models.Index(fields=['price', 'discount']),
+        ]
 
 # from django.contrib.auth.models import User   # explain : Instead of using the User class directly, use the following two lines
 from django.contrib.auth import get_user_model

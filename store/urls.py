@@ -14,5 +14,6 @@ urlpatterns = [
     # /product/slug-of/product/12
     # /product/12/slug-of/product
     path('product/<int:pid>/', views.ProductDetailView.as_view(), name='product-detail'),
-    path('product/<int:pid>/comments', views.CommentsView.as_view(), name='comments')
+    path('product/<int:pid>/comments', views.CommentsView.as_view(), name='comments'),
+    path('cart/add/<int:pid>/', views.CartAddView.as_view(), name='cart_add'),
 ]

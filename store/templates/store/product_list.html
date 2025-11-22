@@ -20,7 +20,7 @@
           <div class="mt-auto d-flex justify-content-between align-items-center">
             <div class="btn-group">
               <a class="btn btn-sm btn-outline-secondary" href="{% url "store:product-detail" pid=p.id %}">View</a>
-              <button type="button" class="btn btn-sm btn-outline-secondary">Add To Card</button>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url "store:cart_add" pid=p.id %}">Add To Card</a>
             </div>
             <small class="text-muted">
               {% if p.discount > 0 %}

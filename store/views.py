@@ -68,3 +68,31 @@ class CommentsView(View):
             comment.save()         
             return HttpResponseRedirect(reverse('store:product-detail', kwargs={"pid":pid}))
         return render(request, 'store/product_details.html', {'obj': product, 'form': form})
+
+
+
+class CartAddView(View):
+    def get(self, request, pid):
+        obj = get_object_or_404(models.Product, id=pid)
+        cart = request.session.get('cart', {})
+        id = str(obj.id)
+        if id in cart:
+            cart[id] += 1
+        else:
+            cart[id] = 1
+            
+        request.session['cart'] = cart
+        return HttpResponseRedirect(reverse('store:product_list'))
+
+
+# class CartRemoveView(View):
+#     def get(self, request, pid):
+#         obj = get_object_or_404(models.Product, id=pid)
+#         cart = request.session.get('cart', {})
+#         id = str(obj.id)
+#         if id in cart:
+#             del cart[id]
+            
+#         request.session['cart'] = cart
+#         return HttpResponseRedirect(reverse('store:product_list'))    
+    
