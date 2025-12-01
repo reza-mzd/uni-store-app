@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+
+    <table class='table'>
+        <thead>
+            <th>Name</th><th>Price</th><th>Count</th><th>Discount</th><th>Total</th>
+        </thead>
+        <tbody>
+            {% for id, item in cart.items %}
+                <tr>
+                    <td>{{ item.obj.name }}</td>
+                    <td>{{ item.obj.price }}</td>
+                    <td>{{ item.count }}</td>
+                    <td>{{ item.obj.discount }}%</td>
+                    <td>{{ item.price }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {{ price }} Tomans
+    <form method="post">
+        {% csrf_token %}
+        <table>
+            {{ form }}
+        </table>
+        <input type="submit" class="btn btn-primary" value="Pay">
+    </form>
+    <hr>
+{% endblock main_content %}

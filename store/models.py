@@ -61,3 +61,50 @@ class Comment(models.Model):
     
     def __str__(self):
         return f'Comment by {self.user.username} on {self.date.strftime("%Y-%m-%d")}'
+
+
+class Invoice(models.Model):
+    
+    class STATE(models.TextChoices):
+        STATE_PENDING = 'pending', "Pending"
+        STATE_COMPLETED = "completed", "Completed"
+        STATE_CANCELED = "canceled", "Canceled"
+        
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    date = models.DateTimeField(auto_now_add=True)
+    total = models.PositiveIntegerField()
+    address = models.CharField(max_length=255)
+    phone = models.CharField(max_length=20)
+    number = models.CharField(max_length=20, default=None, null=True, blank=True)
+    state = models.CharField(max_length=10, choices=STATE.choices, default=STATE.STATE_PENDING)
+
+
+class InvoiceItem(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    price = models.PositiveIntegerField()
+    count = models.PositiveIntegerField()
+    discount = models.PositiveIntegerField()
+    name = models.CharField(max_length=255)
+    total = models.PositiveBigIntegerField()
+    
+    def save(self, *args, **kwargs):
+        self.total = (self.price - self.discount*self.price/100) * self.count
+        super().save(*args, **kwargs)
+
+
+class Payment(models.Model):
+    
+    class STATE(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        ERROR = 'error', 'ERROR'
+        COMPLETE = 'complete', 'Completed'
+
+    invoice = models.OneToOneField(Invoice, on_delete=models.PROTECT)
+    amount = models.PositiveIntegerField()
+    description = models.CharField(max_length=255)
+    phone = models.CharField(max_length=255)
+    authority = models.CharField(max_length=50)
+    refid = models.CharField(max_length=50, null=True, blank=True)
+    state = models.CharField(max_length=20, choices=STATE.choices, default=STATE.PENDING)
+        

@@ -26,7 +26,7 @@
           </a>
         </div>
         <div style="color: white; margin-right: 25px">
-          Cart: {{ request.session.cart|length }}
+          <a href="{% url "store:cart_details" %}">Cart</a>: <span id="cart-info">{{ request.session.cart|length }}</span>
           {% if user.is_authenticated %}
             Welcome {{ user.username }}
             <a href="{% url "logout" %}" class="btn btn-primary">Logout</a>
@@ -67,5 +67,7 @@
     <script src="{% static "js/popper.min.js" %}"></script>
     <script src="{% static "js/bootstrap.bundle.min.js" %}"></script>
     <script src="{% static "js/holder.min.js" %}"></script>
+
+    {% block endofpage %}{% endblock endofpage %}
   </body>
 </html>

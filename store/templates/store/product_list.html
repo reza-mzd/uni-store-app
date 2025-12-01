@@ -20,7 +20,7 @@
           <div class="mt-auto d-flex justify-content-between align-items-center">
             <div class="btn-group">
               <a class="btn btn-sm btn-outline-secondary" href="{% url "store:product-detail" pid=p.id %}">View</a>
-              <a class="btn btn-sm btn-outline-secondary" href="{% url "store:cart_add" pid=p.id %}">Add To Card</a>
+              <a class="btn btn-sm btn-outline-secondary add-to-cart-btn" data-id="{{p.id}}" data-addurl={% url "store:cart_add" pid=p.id %}>Add To Card</a>
             </div>
             <small class="text-muted">
               {% if p.discount > 0 %}
@@ -38,3 +38,32 @@
 
 {% endspaceless %}
 {% endblock main_content %}
+
+{% block endofpage %}
+    <script type='text/javascript'>
+    {# window.alert("Hello"); #} 
+    {# console.log("This is a log sample"); #}
+
+    $('.add-to-cart-btn').click(function (e){
+      // Disable Default action!
+      e.preventDefault();
+      console.log("Clicked");
+      const pid = $(this).attr('data-id');
+      const url = $(this).attr('data-addurl');
+      $.get(url, function(response){
+        console.log(response);
+        //var item_count = Object.keys(response.cart).length;
+        var item_count = 0;
+        var total_count = 0;
+        for(const [key, value] of Object.entries(response.cart)){
+          item_count += 1;
+          total_count += value;
+        }
+        html = item_count + "(" + total_count + ")";
+        $('#cart-info').html(html);
+      });
+      return false;
+    });
+
+  </script>
+{% endblock endofpage %}

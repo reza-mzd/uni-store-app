@@ -20,8 +20,16 @@ class MyForm(forms.Form):
 
         if u == p:
             raise forms.ValidationError('User and Pass must not be same')
-        
+
+
 class CommentForm(forms.ModelForm):
     class Meta:
         model = models.Comment
         fields = ['body']
+
+
+class InvoiceForm(forms.ModelForm):
+    
+    class Meta:
+        model = models.Invoice
+        fields = ['address', 'phone']

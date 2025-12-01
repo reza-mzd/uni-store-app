@@ -1,8 +1,15 @@
 from django.shortcuts import render
+from django.shortcuts import redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from . import forms
 from . import models
 from django.views import View
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from zeep import Client
+from django.contrib.sites.shortcuts import get_current_site
+from zeep.exceptions import TransportError 
+from requests.exceptions import HTTPError
 
 
 # def hello_world(request):
@@ -70,7 +77,7 @@ class CommentsView(View):
         return render(request, 'store/product_details.html', {'obj': product, 'form': form})
 
 
-
+from django.http import JsonResponse
 class CartAddView(View):
     def get(self, request, pid):
         obj = get_object_or_404(models.Product, id=pid)
@@ -80,9 +87,19 @@ class CartAddView(View):
             cart[id] += 1
         else:
             cart[id] = 1
-            
+        
         request.session['cart'] = cart
-        return HttpResponseRedirect(reverse('store:product_list'))
+        ids = list(cart.keys())
+        objects = models.Product.objects.filter(id__in=ids)
+
+        total_price = 0
+        total_count = 0
+        for id, count in cart.items():
+            total_count += count
+            cobj = objects.get(id=id)
+            total_price += (cobj.price - cobj.price*cobj.discount/100) * count
+        return JsonResponse({'cart': cart, 'total_count': total_count,
+                            'total_price': total_price})
 
 
 # class CartRemoveView(View):
@@ -95,4 +112,127 @@ class CartAddView(View):
             
 #         request.session['cart'] = cart
 #         return HttpResponseRedirect(reverse('store:product_list'))    
+def get_cart_details(request):
+        
+    cart = request.session['cart']
+    ids = list(cart.keys())
+    objects = models.Product.objects.filter(id__in=ids)
+    cart_info = {}
+    total_price = 0
+    for id, count in cart.items():
+        p = objects.get(id=id)
+        price = (p.price - p.price*p.discount/100) * count
+        cart_info[id] = {'obj': p, 'count': count, 'price': int(price)}
+        total_price += price
+    return cart, cart_info, total_price
+
+
+class CartDetailsView(View):
     
+    def get(self, request):
+        _, cart_info, total_price = get_cart_details(request)
+        return render(request, 'store/cart.html', {'cart': cart_info,
+                                                   'price': total_price})
+
+
+from django.db import transaction, IntegrityError
+class CheckoutView(LoginRequiredMixin, View):
+    def get(self, request):
+        _, cart_info, total_price = get_cart_details(request)
+        form = forms.InvoiceForm()
+        return render(request, 'store/invoice_page1.html', {'cart': cart_info,
+                                                            'price': total_price,
+                                                            'form': form})
+        
+    
+    def post(self, request):
+        _, cart_info, total_price = get_cart_details(request)
+        form = forms.InvoiceForm(request.POST)
+        if form.is_valid():
+            invoice = form.save(commit=False)
+            invoice.user = request.user
+            invoice.total = total_price
+            items = []
+            for pid,item in cart_info.items():
+                o = models.InvoiceItem(product=item['obj'],
+                                       invoice=invoice,
+                                       price=item['obj'].price,
+                                       discount=item['obj'].discount,
+                                       name=item['obj'].name,
+                                       total=item['price'],
+                                       count=item['count'])
+                items.append(o)
+            try:
+                with transaction.atomic():
+                    invoice.save()
+                    items = models.InvoiceItem.objects.bulk_create(items)
+                    payment = models.Payment(invoice=invoice,
+                                             amount=invoice.total,
+                                             description=f'My Invoice',
+                                             phone=invoice.phone)
+                    client = Client('https://sandbox.zarinpal.com/pg/services/WebGate/wsdl')
+                    site = get_current_site(request)
+                    domain = site.domain
+                    res = client.service.PaymentRequest('XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
+                                                        payment.amount,
+                                                        payment.description,
+                                                        request.user.email,
+                                                        payment.phone,
+                                                        f"http://{domain}{reverse('store:payment_verify')}")
+                    if res.Status == 100:   
+                        payment.authority = res.Authority
+                        payment.save()
+                        return redirect(f'https://sandbox.zarinpal.com/pg/StartPay/{payment.authority}')
+                    else:
+                        raise RuntimeError(f'Zarinpal Status {res.Status}')
+            except RuntimeError: 
+                transaction.rollback()
+                return render(request, 'store/invoice_process_error.html', 
+                              {'message': 'Payment failed: Logical error from the payment gateway.'})
+            
+            except (TransportError, HTTPError) as e: 
+                transaction.rollback()
+                return render(request, 'store/invoice_process_error.html', 
+                              {'message': 'Communication error with the payment gateway (Check network/proxy).'})
+
+            except Exception as e:
+                transaction.rollback()
+                return render(request, 'store/invoice_process_error.html', 
+                              {'message': 'Internal error in the checkout process.'})
+            
+        return render(request, 'store/invoice_page1.html', {'cart': cart_info,
+                                                            'price': total_price,
+                                                            'form': form})
+
+
+
+class PaymentVerifyView(LoginRequiredMixin, View):
+    
+    def get(self, request):
+        status = request.GET.get('Status')
+        authority = request.GET.get('Authority')
+        payment = get_object_or_404(models.Payment, authority=authority,
+                                                    state = models.Payment.STATE.PENDING)
+        if status == "OK":
+            client = Client('https://sandbox.zarinpal.com/pg/services/WebGate/wsdl?WSDL')
+            res = client.service.PaymentVerification('XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
+                                                payment.authority,
+                                                payment.amount)
+            if res.Status == 100:
+                payment.refid = res.RefID
+                payment.state = models.Payment.STATE.COMPLETE
+                payment.invoice.state = models.Invoice.STATE.STATE_COMPLETED
+                payment.save()
+                payment.invoice.save()
+                return render(request, "store/payment_ok.html",{'refid': payment.refid})
+            else:
+                payment.state = models.Payment.STATE.ERROR
+                payment.invoice.state = models.Invoice.STATE.STATE_CANCELED
+                payment.save()
+                payment.invoice.save()
+                return render(request, 'store/payment_failed.html')
+                
+        else:
+            payment.state = models.Payment.STATE.ERROR
+            payment.save()
+            return render(request, 'store/payment_failed.html')

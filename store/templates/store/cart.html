@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+
+    <table class='table'>
+        <thead>
+            <th>Name</th><th>Price</th><th>Count</th><th>Discount</th><th>Total</th>
+        </thead>
+        <tbody>
+            {% for id, item in cart.items %}
+                <tr>
+                    <td>{{ item.obj.name }}</td>
+                    <td>{{ item.obj.price }}</td>
+                    <td>{{ item.count }}</td>
+                    <td>{{ item.obj.discount }}%</td>
+                    <td>{{ item.price }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {{ price }} Tomans
+    <hr>
+    <a href="{% url "store:checkout" %}" class="btn btn-primary">Checkout</a>
+{% endblock main_content %}
